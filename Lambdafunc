@@ -1,0 +1,23 @@
+import boto3
+import os
+
+ec2=boto3.client('ec2')
+sns=boto3.client('sns')
+
+def lambda_handler(event,context):
+    sns_arn=os.environ[arn:aws:sns:us-west-2:654654183892:missedtagnotif]
+    instances=ec2.describle_instances()
+    missingtaginst=[]
+    for reservation in instances['Reservations']:
+        for inst in reservation['Instances']:
+            tags=inst.get('Tags',[])
+            if not any(tag['Key']=='Environment' for tag in tags):
+                missingtaginst.append(inst['InstanceId'])
+    if missingtaginst:
+        msg=f'these EC2 instances are missing the Environment Tags:{missingtaginst}'
+        sns.publish(TopicArn=sns_arn,Message=msg,Subject='Missing Environment Tags in EC2 instances')
+
+    return{
+        'statuscode':200,
+        'body':'Notification sent'
+    }
